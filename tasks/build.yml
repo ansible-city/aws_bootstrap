@@ -1,0 +1,101 @@
+---
+
+- name: Ensure essential python packages
+  become: yes
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - libffi-dev
+    - libssl-dev
+    - libyaml-dev
+    - libyaml-cpp-dev
+    - python-dev
+    - python-pip
+    - python-setuptools
+    - python-virtualenv
+  tags:
+    - skip_ansible_lint # ANSIBLE0010
+
+- name: Download AWS cfn-bootstrap
+  become: yes
+  get_url:
+    url: https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
+    dest: /usr/local/src/aws-cfn-bootstrap-latest.tar.gz
+
+- name: Prepare AWS cfn-bootstrap folder
+  become: yes
+  file:
+    name: /usr/local/src/aws-cfn-bootstrap-latest
+    state: directory
+
+- name: Extract AWS cfn-bootstrap
+  become: yes
+  unarchive:
+    remote_src: yes
+    src: /usr/local/src/aws-cfn-bootstrap-latest.tar.gz
+    dest: /usr/local/src/aws-cfn-bootstrap-latest
+    creates: /usr/local/src/aws-cfn-bootstrap-latest/setup.py
+
+- name: Install AWS cfn-bootstrap
+  become: yes
+  command: easy_install /usr/local/src/aws-cfn-bootstrap-latest
+  args:
+    creates: /usr/local/bin/cfn-init
+
+- name: Ensure landing folder not there
+  become: yes
+  file:
+    path: /bootstrap
+    state: absent
+
+- name: Prepare landing folder
+  become: yes
+  file:
+    path: /bootstrap
+    mode: 0777
+    state: directory
+
+- name: Prepare for teleportation
+  shell: "tar --exclude .git:.vagrant -czf self.tgz $(ls -d ansible Makefile requirements.txt 2>/dev/null)"
+  args:
+    chdir: "{{ pwd }}"
+    creates: "{{ pwd }}/self.tgz"
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - skip_ansible_lint # ANSIBLE0006
+
+- name: Teleport yourself to the machine
+  unarchive:
+    src: "{{ pwd }}/self.tgz"
+    dest: /bootstrap
+
+- name: Clean-up after teleportation
+  file:
+    path: "{{ pwd }}/self.tgz"
+    state: absent
+  delegate_to: localhost
+  run_once: true
+
+- name: Install local python deps
+  command: make deps_python
+  args:
+    chdir: /bootstrap
+    creates: /bootstrap/.venv
+
+- name: Install additional postgresql extras
+  include: extras/postgresql.yml
+  when: "'postgresql in aws_bootstrap.extras'"
+
+- name: Copy bootstrap scripts
+  become: yes
+  copy:
+    src: "{{ item.name }}"
+    dest: "/bootstrap/{{ item.name }}"
+    mode: "{{ item.mode }}"
+  with_items:
+    - name: bootstrap.inc.sh
+      mode: u=rw,g=rw,o=r
+    - name: bootstrap_aws
+      mode: u=rwx,g=rwx,o=r

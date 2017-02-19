@@ -1,0 +1,6 @@
+---
+
+- name: build
+  include: build.yml
+  tags:
+    - build

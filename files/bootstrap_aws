@@ -1,0 +1,29 @@
+#!/bin/bash
+
+##
+# Use this script to bootstrap AMI on AWS.
+#
+
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+# shellcheck source=./base.sh
+. "${DIR}/bootstrap.inc.sh"
+
+function aws {
+	local launch_config="${1}"
+	local auto_scaling_group="${2}"
+	local region="${3}"
+	local stack_name="${4}"
+	local role="${5}"
+
+	# Sanitize path
+	PATH="/usr/sbin:/sbin:/usr/bin:/bin:/usr/local/bin/"
+
+	set_global "${launch_config}" "${auto_scaling_group}" "${region}" "${stack_name}"
+	cfnInit "${launch_config}" "${region}" "${stack_name}"
+	bootstrap ${role}
+	signal 0
+	cleanup
+}
+
+aws "$@"

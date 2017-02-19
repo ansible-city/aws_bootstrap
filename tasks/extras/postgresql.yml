@@ -1,0 +1,17 @@
+---
+##
+# The "postgresql" extras installs "psycopg2" pip package insinde the .venv. This
+# package is required for the postgresql ansible tasks.
+
+- name: Install essential packages
+  become: yes
+  apt:
+    name: "{{ item }}"
+  with_items:
+    - libpq-dev
+    - python-dev
+
+- name: Install psycopg2 pip package for ansible postgresql tasks
+  pip:
+    name: psycopg2
+    virtualenv: /bootstrap/.venv
