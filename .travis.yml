@@ -1,0 +1,27 @@
+---
+
+group: stable
+dist: trusty
+branches:
+  only:
+    - develop
+    - master
+
+env:
+  - ANSIBLE_VERSION=2.4
+  - ANSIBLE_VERSION=2.3
+  - ANSIBLE_VERSION=2.2
+
+language: python
+python: "2.7"
+
+before_install:
+  # Make sure everything's up to date.
+  - sudo apt-get update -qq
+
+script:
+  - make lint
+  - make test_ansible TEST_PLAYBOOK=test.yml
+
+notifications:
+  webhooks: https://galaxy.ansible.com/api/v1/notifications/

@@ -1,0 +1,17 @@
+---
+##
+# The "mysql" extras installs "MySQL-python" pip package insinde the .venv. This
+# package is required for the mysql ansible tasks.
+
+- name: Install essential packages
+  become: yes
+  apt:
+    name: "{{ item }}"
+  with_items:
+    - python-mysqldb
+    - libmysqlclient-dev
+
+- name: Install MySQL-python pip package for ansible mysql tasks
+  pip:
+    name: MySQL-python
+    virtualenv: /bootstrap/niso-build/.venv

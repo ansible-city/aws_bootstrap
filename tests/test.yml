@@ -1,0 +1,17 @@
+---
+
+- name: Test AWS Bootstrap role
+  hosts: all
+
+  vars:
+    root_dir: "{{ playbook_dir }}/fake_project"
+
+  roles:
+    - role: ansible-city.aws_bootstrap
+
+  post_tasks:
+    - name:
+      command: /usr/local/bin/cfn-init --help
+      register: cfninit_version
+      tags:
+        - assert

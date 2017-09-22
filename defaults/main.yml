@@ -1,5 +1,11 @@
 ---
 
 aws_bootstrap:
-  extras:
-    - postgresql
+  ##
+  # available extras:
+  # - htpasswd
+  # - mysql
+  # - postgresql
+  extras: [ ]
+
+  version: "1.4-22"

@@ -5,7 +5,7 @@ DO_CLEANUP=1
 
 function log {
 	echo "$1"
-	logger -t "ansible-bootstrap" -- "${1}";
+	logger -t "bootstrap" -- "${1}";
 }
 
 function die {
@@ -14,20 +14,6 @@ function die {
 	signal 1
 	cleanup
 	exit 1
-}
-
-## Export global variables
-# parameters:
-# - launch configuration resorce name
-# - autoscaling group name
-# - AWS region
-# - stack name
-#
-function set_global {
-	export LAUNCH_CONFIG="${1}"
-	export ASG_NAME="${2}"
-	export REGION="${3}"
-	export STACK_NAME="${4}"
 }
 
 function signal {
@@ -48,25 +34,29 @@ function cleanup {
 	fi
 }
 
+## Export global variables
+# parameters:
+# - launch configuration resorce name
+# - autoscaling group name
+# - AWS region
+# - stack name
+#
+function set_global {
+	export LAUNCH_CONFIG="${1}"
+	export ASG_NAME="${2}"
+	export REGION="${3}"
+	export STACK_NAME="${4}"
+}
+
 function cfnInit {
 	local resourceName="${1}"
-	local region="${2}"
-	local stackName="${3}"
+	local signalResourceName="${2}"
+	local region="${3}"
+	local stackName="${4}"
 
 	/usr/local/bin/cfn-init \
 		-s "${stackName}" \
 		-r "${resourceName}" \
 		--region "${region}" \
 	|| die "cfn-init failed for ${resourceName}"
-}
-
-function bootstrap {
-	local ROLE="${1}"
-
-	cd "${BOOTSTRAP_DIR}" && \
-	make ansible_provision_local \
-		ROLE="${ROLE}" \
-	|| die "configure playbook failed"
-
-	log "Instance bootstrapped"
 }

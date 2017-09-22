@@ -1,6 +1,14 @@
 ---
 
-- name: build
+- name: Check global variables
+  assert:
+    that:
+      - "'root_dir' is defined"
+  tags:
+    - build
+    - configure
+
+- name: Install bootstrap
   include: build.yml
   tags:
     - build

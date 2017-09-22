@@ -20,34 +20,22 @@
 - name: Download AWS cfn-bootstrap
   become: yes
   get_url:
-    url: https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
-    dest: /usr/local/src/aws-cfn-bootstrap-latest.tar.gz
-
-- name: Prepare AWS cfn-bootstrap folder
-  become: yes
-  file:
-    name: /usr/local/src/aws-cfn-bootstrap-latest
-    state: directory
+    url: "https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-{{ aws_bootstrap.version }}.tar.gz"
+    dest: "/usr/local/src/aws-cfn-bootstrap-{{ aws_bootstrap.version }}.tar.gz"
 
 - name: Extract AWS cfn-bootstrap
   become: yes
   unarchive:
     remote_src: yes
-    src: /usr/local/src/aws-cfn-bootstrap-latest.tar.gz
-    dest: /usr/local/src/aws-cfn-bootstrap-latest
-    creates: /usr/local/src/aws-cfn-bootstrap-latest/setup.py
+    src: "/usr/local/src/aws-cfn-bootstrap-{{ aws_bootstrap.version }}.tar.gz"
+    dest: /usr/local/src/
+    creates: "/usr/local/src/aws-cfn-bootstrap-{{ aws_bootstrap.version | regex_replace('^(.*?)-[0-9]+$', '\\1') }}/setup.py"
 
 - name: Install AWS cfn-bootstrap
   become: yes
-  command: easy_install /usr/local/src/aws-cfn-bootstrap-latest
+  command: "easy_install /usr/local/src/aws-cfn-bootstrap-{{ aws_bootstrap.version | regex_replace('^(.*?)-[0-9]+$', '\\1') }}"
   args:
     creates: /usr/local/bin/cfn-init
-
-- name: Ensure landing folder not there
-  become: yes
-  file:
-    path: /bootstrap
-    state: absent
 
 - name: Prepare landing folder
   become: yes
@@ -57,45 +45,52 @@
     state: directory
 
 - name: Prepare for teleportation
-  shell: "tar --exclude .git:.vagrant -czf self.tgz $(ls -d ansible Makefile requirements.txt 2>/dev/null)"
+  shell: "tar --exclude .git:.vagrant:self.tgz -czf self.tgz $(ls -d ansible Makefile 2>/dev/null)"
   args:
-    chdir: "{{ pwd }}"
-    creates: "{{ pwd }}/self.tgz"
+    chdir: "{{ root_dir }}"
+    creates: "{{ root_dir }}/self.tgz"
   delegate_to: localhost
   run_once: true
   tags:
     - skip_ansible_lint # ANSIBLE0006
 
 - name: Teleport yourself to the machine
-  unarchive:
-    src: "{{ pwd }}/self.tgz"
-    dest: /bootstrap
+  copy:
+    src: "{{ root_dir }}/self.tgz"
+    dest: /tmp
+  register: teleport_status
 
-- name: Clean-up after teleportation
-  file:
-    path: "{{ pwd }}/self.tgz"
-    state: absent
-  delegate_to: localhost
-  run_once: true
+- name: Unpack
+  become: yes
+  unarchive:
+    remote_src: yes
+    src: "/tmp/self.tgz"
+    dest: /bootstrap
+  when: teleport_status.changed
 
 - name: Install local python deps
-  command: make deps_python
+  command: make init
   args:
     chdir: /bootstrap
     creates: /bootstrap/.venv
 
-- name: Install additional postgresql extras
-  include: extras/postgresql.yml
-  when: "'postgresql in aws_bootstrap.extras'"
+- name: Install additional extras
+  include: extras/htpasswd.yml
+  when: "'htpasswd' in aws_bootstrap.extras"
 
-- name: Copy bootstrap scripts
+- name: Install additional extras
+  include: extras/postgresql.yml
+  when: "'postgresql' in aws_bootstrap.extras"
+
+- name: Install additional extras
+  include: extras/mysql.yml
+  when: "'mysql' in aws_bootstrap.extras"
+
+- name: Copy scripts
   become: yes
   copy:
-    src: "{{ item.name }}"
-    dest: "/bootstrap/{{ item.name }}"
-    mode: "{{ item.mode }}"
+    src: "{{ item }}"
+    dest: "/bootstrap/{{ item }}"
+    mode: 0644
   with_items:
-    - name: bootstrap.inc.sh
-      mode: u=rw,g=rw,o=r
-    - name: bootstrap_aws
-      mode: u=rwx,g=rwx,o=r
+    - bootstrap.inc.sh
