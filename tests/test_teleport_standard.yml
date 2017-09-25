@@ -8,10 +8,18 @@
 
   roles:
     - role: ansible-city.aws_bootstrap
+      aws_bootstrap:
+        teleport_mode: standard
 
   post_tasks:
     - name:
       command: /usr/local/bin/cfn-init --help
       register: cfninit_version
+      tags:
+        - assert
+
+    - name:
+      command: ls -l /bootstrap/.venv
+      register: bootstrap_venv
       tags:
         - assert

@@ -1,11 +1,12 @@
 ---
 
 aws_bootstrap:
+  teleport_mode: none
+  version: "1.4-22"
+
   ##
   # available extras:
   # - htpasswd
   # - mysql
   # - postgresql
   extras: [ ]
-
-  version: "1.4-22"

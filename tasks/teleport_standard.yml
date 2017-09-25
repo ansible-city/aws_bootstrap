@@ -1,0 +1,31 @@
+---
+
+- name: Prepare for teleportation
+  shell: "tar --exclude .git:.vagrant:self.tgz -czf self.tgz $(ls -d ansible Makefile 2>/dev/null)"
+  args:
+    chdir: "{{ root_dir }}/.."
+    creates: "{{ root_dir }}/../self.tgz"
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - skip_ansible_lint # ANSIBLE0006
+
+- name: Teleport yourself to the machine
+  copy:
+    src: "{{ root_dir }}/../self.tgz"
+    dest: /tmp
+  register: teleport_status
+
+- name: Unpack
+  become: yes
+  unarchive:
+    remote_src: yes
+    src: "/tmp/self.tgz"
+    dest: /bootstrap
+  when: teleport_status.changed
+
+- name: Install local python deps
+  command: make .venv
+  args:
+    chdir: /bootstrap
+    creates: /bootstrap/.venv

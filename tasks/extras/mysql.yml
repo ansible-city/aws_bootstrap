@@ -14,4 +14,4 @@
 - name: Install MySQL-python pip package for ansible mysql tasks
   pip:
     name: MySQL-python
-    virtualenv: /bootstrap/niso-build/.venv
+    virtualenv: /bootstrap/.venv
