@@ -25,7 +25,7 @@
   when: teleport_status.changed
 
 - name: Install local python deps
-  command: make .venv
+  command: make /bootstrap/.venv
   args:
     chdir: /bootstrap
     creates: /bootstrap/.venv

@@ -49,10 +49,9 @@ function set_global {
 }
 
 function cfnInit {
-	local resourceName="${1}"
-	local signalResourceName="${2}"
-	local region="${3}"
-	local stackName="${4}"
+	local resourceName="${1:-$LAUNCH_CONFIG}"
+	local region="${2:-$REGION}"
+	local stackName="${3:-$STACK_NAME}"
 
 	/usr/local/bin/cfn-init \
 		-s "${stackName}" \
