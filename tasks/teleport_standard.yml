@@ -1,7 +1,9 @@
 ---
 
 - name: Prepare for teleportation
-  shell: "tar --exclude .git:.vagrant:self.tgz -czf self.tgz $(ls -d ansible Makefile 2>/dev/null)"
+  shell: "tar --exclude {{ aws_bootstrap.teleport_exclude }}
+    -czf self.tgz
+    $(ls -d {{ aws_bootstrap.teleport_include }} 2>/dev/null)"
   args:
     chdir: "{{ root_dir }}/.."
     creates: "{{ root_dir }}/../self.tgz"

@@ -2,6 +2,8 @@
 
 aws_bootstrap:
   teleport_mode: none
+  teleport_include: ansible Makefile
+  teleport_exclude: ".git:.venv:self.tgz"
   version: "1.4-22"
 
   ##
