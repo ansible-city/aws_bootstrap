@@ -25,8 +25,6 @@ function signal {
 }
 
 function cleanup {
-	chmod 777 /tmp/ansible.log
-
 	if [ "${DO_CLEANUP}" -ne 0 ]; then
 		rm -rf "${BOOTSTRAP_DIR}/environment.yml"
 	else

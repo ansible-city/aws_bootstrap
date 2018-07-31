@@ -33,9 +33,10 @@
 
 - name: Install AWS cfn-bootstrap
   become: yes
-  command: "easy_install /usr/local/src/aws-cfn-bootstrap-{{ aws_bootstrap.version | regex_replace('^(.*?)-[0-9]+$', '\\1') }}"
+  command: "/usr/bin/env python setup.py install"
   args:
     creates: /usr/local/bin/cfn-init
+    chdir: "/usr/local/src/aws-cfn-bootstrap-{{ aws_bootstrap.version | regex_replace('^(.*?)-[0-9]+$', '\\1') }}"
 
 - name: Prepare landing folder
   become: yes
